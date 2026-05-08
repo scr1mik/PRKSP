@@ -8,11 +8,13 @@ from app.core.config import settings
 
 
 def create_session_factory(database_url: str | None = None) -> sessionmaker[Session]:
+    resolved_database_url = database_url or settings.database_url
     engine = create_engine(
-        database_url or settings.database_url,
+        resolved_database_url,
         connect_args={"check_same_thread": False}
-        if (database_url or settings.database_url).startswith("sqlite")
+        if resolved_database_url.startswith("sqlite")
         else {},
+        pool_pre_ping=True,
     )
     return sessionmaker(bind=engine, autocommit=False, autoflush=False)
 

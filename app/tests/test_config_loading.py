@@ -13,7 +13,6 @@ def test_environment_variables_override_yaml(tmp_path: Path, monkeypatch) -> Non
         yaml.safe_dump(
             {
                 "port": 7000,
-                "database_url": "sqlite:///./yaml.db",
                 "app_env": "yaml",
             }
         ),
@@ -28,4 +27,4 @@ def test_environment_variables_override_yaml(tmp_path: Path, monkeypatch) -> Non
 
     assert loaded_settings.port == 5050
     assert loaded_settings.app_env == "staging"
-    assert loaded_settings.database_url == "sqlite:///./yaml.db"
+    assert loaded_settings.database_url == "sqlite:///./events.db"

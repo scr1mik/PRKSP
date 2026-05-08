@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.api.router import api_router
 from app.core.config import Settings, settings
@@ -50,7 +51,9 @@ def create_app(app_settings: Settings = settings) -> FastAPI:
 
     @app.get("/health")
     def healthcheck() -> dict[str, str]:
-        return {"status": "ok"}
+        with session_factory() as db_session:
+            db_session.execute(text("SELECT 1"))
+        return {"status": "ok", "database": "connected"}
 
     return app
 

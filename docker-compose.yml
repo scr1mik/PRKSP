@@ -1,18 +1,63 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   backend:
     build:
       context: .
       dockerfile: app/Dockerfile
-    container_name: future-events-backend
-    env_file:
-      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       APP_NAME: ${APP_NAME}
       APP_VERSION: ${APP_VERSION}
       APP_ENV: ${APP_ENV}
       HOST: ${HOST}
       PORT: ${PORT}
-      DATABASE_URL: ${DATABASE_URL}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      API_PREFIX: ${API_PREFIX}
+      DEBUG: ${DEBUG}
+    expose:
+      - "${PORT}"
+
+  backend-direct:
+    profiles:
+      - direct
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_NAME: ${APP_NAME}
+      APP_VERSION: ${APP_VERSION}
+      APP_ENV: ${APP_ENV}
+      HOST: ${HOST}
+      PORT: ${PORT}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
       API_PREFIX: ${API_PREFIX}
@@ -24,10 +69,12 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
-    container_name: future-events-frontend
     depends_on:
       - backend
     environment:
       BACKEND_PORT: ${PORT}
     ports:
       - "8080:80"
+
+volumes:
+  postgres_data:

@@ -21,11 +21,14 @@ function App() {
   }, []);
 
   async function loadEvents() {
-    const data = await fetchEvents();
-    setEvents(data);
-    setStatusMessage(
-      data.length ? "События загружены" : "Список событий пока пуст",
-    );
+    try {
+      const data = await fetchEvents();
+      setEvents(data);
+      setStatusMessage(data.length ? "События загружены" : "Список событий пока пуст");
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Не удалось загрузить события");
+    }
   }
 
   function handleChange(event) {
@@ -39,17 +42,22 @@ function App() {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (editingId === null) {
-      await createEvent(form);
-      setStatusMessage("Событие добавлено");
-    } else {
-      await updateEvent(editingId, form);
-      setStatusMessage("Событие обновлено");
-    }
+    try {
+      if (editingId === null) {
+        await createEvent(form);
+        setStatusMessage("Событие добавлено");
+      } else {
+        await updateEvent(editingId, form);
+        setStatusMessage("Событие обновлено");
+      }
 
-    setForm(emptyForm);
-    setEditingId(null);
-    await loadEvents();
+      setForm(emptyForm);
+      setEditingId(null);
+      await loadEvents();
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Не удалось сохранить событие");
+    }
   }
 
   function handleEdit(item) {
@@ -64,13 +72,18 @@ function App() {
   }
 
   async function handleDelete(eventId) {
-    await deleteEvent(eventId);
-    setStatusMessage("Событие удалено");
-    if (editingId === eventId) {
-      setForm(emptyForm);
-      setEditingId(null);
+    try {
+      await deleteEvent(eventId);
+      setStatusMessage("Событие удалено");
+      if (editingId === eventId) {
+        setForm(emptyForm);
+        setEditingId(null);
+      }
+      await loadEvents();
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Не удалось удалить событие");
     }
-    await loadEvents();
   }
 
   return (
@@ -80,15 +93,13 @@ function App() {
           <p className="eyebrow">САЙТ СОЗДАЛ ДМИТРИЙ УТКИН</p>
           <h1>МИРОВЫЕ ИВЕНТЫ</h1>
           <p className="hero-text">
-            Каталог гипотетических событий будущего: от новой пандемии до
-            вторжения инопланетян.
+            Каталог гипотетических событий будущего: от новой пандемии до вторжения
+            инопланетян.
           </p>
         </section>
 
         <section className="panel">
-          <h2>
-            {editingId === null ? "Добавить событие" : "Редактировать событие"}
-          </h2>
+          <h2>{editingId === null ? "Добавить событие" : "Редактировать событие"}</h2>
           <form className="event-form" onSubmit={handleSubmit}>
             <input
               name="title"

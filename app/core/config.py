@@ -40,7 +40,12 @@ class Settings(BaseSettings):
     app_env: str = "development"
     host: str = "0.0.0.0"
     port: int = 8000
-    database_url: str = "sqlite:///./events.db"
+    sqlite_url: str = "sqlite:///./events.db"
+    postgres_host: str = ""
+    postgres_port: int = 5432
+    postgres_db: str = ""
+    postgres_user: str = ""
+    postgres_password: str = ""
     frontend_origin: str = "http://localhost:5173"
     api_prefix: str = "/api"
     debug: bool = True
@@ -64,6 +69,15 @@ class Settings(BaseSettings):
         if normalized in {"0", "false", "no", "off", "release", "production"}:
             return False
         return bool(value)
+
+    @property
+    def database_url(self) -> str:
+        if self.postgres_host and self.postgres_db and self.postgres_user:
+            return (
+                f"postgresql+psycopg://{self.postgres_user}:{self.postgres_password}"
+                f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+            )
+        return self.sqlite_url
 
     @classmethod
     def settings_customise_sources(
