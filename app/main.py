@@ -1,4 +1,8 @@
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
@@ -23,6 +27,26 @@ def create_app(app_settings: Settings = settings) -> FastAPI:
     app.state.session_factory = session_factory
 
     app.include_router(api_router, prefix=app_settings.api_prefix)
+
+    frontend_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+    if frontend_dist.exists():
+        assets_dir = frontend_dist / "assets"
+        if assets_dir.exists():
+            app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+        @app.get("/", include_in_schema=False)
+        def serve_frontend() -> FileResponse:
+            return FileResponse(frontend_dist / "index.html")
+    else:
+        @app.get("/", include_in_schema=False)
+        def root_info() -> JSONResponse:
+            return JSONResponse(
+                {
+                    "service": app_settings.app_name,
+                    "docs": "/docs",
+                    "health": "/health",
+                }
+            )
 
     @app.get("/health")
     def healthcheck() -> dict[str, str]:

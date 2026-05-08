@@ -1,0 +1,17 @@
+.git
+.gitignore
+.pytest_cache
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.env
+.vscode
+app/.venv
+app/events.db
+events.db
+frontend/node_modules
+frontend/dist
+info
+reports

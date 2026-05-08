@@ -6,8 +6,11 @@ venv/
 *.pyo
 *.pyd
 events.db
+app/events.db
 .env
+app/.venv/
 frontend/node_modules/
 frontend/dist/
 info/
 docs/
+.vscode/
