@@ -67,6 +67,39 @@ services:
     deploy:
       replicas: 3
 
+  migrate:
+    profiles:
+      - migrate
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_NAME: ${APP_NAME}
+      APP_VERSION: ${APP_VERSION}
+      APP_ENV: ${APP_ENV}
+      HOST: ${HOST}
+      PORT: ${PORT}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      API_PREFIX: ${API_PREFIX}
+      DEBUG: ${APP_DEBUG}
+      REDIS_URL: redis://redis:6379/0
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME}
+      SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS}
+      IMAGE_TAG: ${IMAGE_TAG}
+      RELEASE_ID: ${RELEASE_ID}
+      SHUTDOWN_TIMEOUT_SECONDS: ${SHUTDOWN_TIMEOUT_SECONDS}
+    command: ["python", "run.py", "migrate"]
+    restart: "no"
+
   backend-direct:
     profiles:
       - direct

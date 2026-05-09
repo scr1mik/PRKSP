@@ -8,6 +8,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY app/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY alembic.ini ./alembic.ini
+COPY alembic ./alembic
 COPY app ./app
 COPY run.py ./run.py
 
@@ -15,4 +17,4 @@ EXPOSE 8000
 
 STOPSIGNAL SIGTERM
 
-CMD ["python", "run.py"]
+CMD ["python", "run.py", "server"]

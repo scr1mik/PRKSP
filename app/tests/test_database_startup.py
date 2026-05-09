@@ -1,4 +1,4 @@
-from app.main import initialize_database_schema
+from app.db.schema import initialize_database_schema
 
 
 class FakeDialect:
@@ -39,7 +39,7 @@ def test_postgres_schema_initialization_uses_advisory_lock(monkeypatch) -> None:
     create_all_binds = []
 
     monkeypatch.setattr(
-        "app.main.Base.metadata.create_all",
+        "app.db.schema.Base.metadata.create_all",
         lambda bind: create_all_binds.append(bind),
     )
 

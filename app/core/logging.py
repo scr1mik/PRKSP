@@ -45,6 +45,7 @@ class JsonFormatter(logging.Formatter):
 
 def configure_logging(service_name: str) -> logging.Logger:
     logger = logging.getLogger("app")
+    logger.disabled = False
     logger.handlers.clear()
     logger.setLevel(logging.INFO)
     logger.propagate = False
