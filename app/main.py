@@ -9,8 +9,10 @@ from sqlalchemy import text
 
 from app.api.router import api_router
 from app.core.config import Settings, settings
+from app.core.logging import configure_logging
 from app.db.base import Base
 from app.db.session import create_session_factory
+from app.middleware import request_logging_middleware
 from app.models.event import Event
 from app.models.user import User
 from app.services.session_store import create_session_store
@@ -30,6 +32,7 @@ def initialize_database_schema(engine: Engine) -> None:
 
 
 def create_app(app_settings: Settings = settings) -> FastAPI:
+    configure_logging(app_settings.app_name)
     app = FastAPI(title=app_settings.app_name, version=app_settings.app_version)
     app.add_middleware(
         CORSMiddleware,
@@ -38,6 +41,7 @@ def create_app(app_settings: Settings = settings) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.middleware("http")(request_logging_middleware)
 
     session_factory = create_session_factory(app_settings.database_url)
     initialize_database_schema(session_factory.kw["bind"])

@@ -8,6 +8,8 @@ def main() -> None:
         host=settings.host,
         port=settings.port,
         reload=settings.debug,
+        access_log=False,
+        log_config=None,
     )
 
 
