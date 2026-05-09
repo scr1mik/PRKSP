@@ -11,6 +11,9 @@ class SessionStore(Protocol):
     def delete(self, session_id: str) -> None:
         ...
 
+    def close(self) -> None:
+        ...
+
 
 class InMemorySessionStore:
     def __init__(self) -> None:
@@ -24,6 +27,9 @@ class InMemorySessionStore:
 
     def delete(self, session_id: str) -> None:
         self._sessions.pop(session_id, None)
+
+    def close(self) -> None:
+        self._sessions.clear()
 
 
 class RedisSessionStore:
@@ -41,6 +47,9 @@ class RedisSessionStore:
 
     def delete(self, session_id: str) -> None:
         self.redis.delete(self._key(session_id))
+
+    def close(self) -> None:
+        self.redis.close()
 
     @staticmethod
     def _key(session_id: str) -> str:

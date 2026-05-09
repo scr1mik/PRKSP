@@ -13,4 +13,6 @@ COPY run.py ./run.py
 
 EXPOSE 8000
 
+STOPSIGNAL SIGTERM
+
 CMD ["python", "run.py"]

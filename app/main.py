@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -12,7 +13,7 @@ from app.core.config import Settings, settings
 from app.core.logging import configure_logging
 from app.db.base import Base
 from app.db.session import create_session_factory
-from app.middleware import request_logging_middleware
+from app.middleware import request_logging_middleware, shutdown_guard_middleware
 from app.models.event import Event
 from app.models.user import User
 from app.services.session_store import create_session_store
@@ -33,7 +34,20 @@ def initialize_database_schema(engine: Engine) -> None:
 
 def create_app(app_settings: Settings = settings) -> FastAPI:
     configure_logging(app_settings.app_name)
-    app = FastAPI(title=app_settings.app_name, version=app_settings.app_version)
+    session_factory = create_session_factory(app_settings.database_url)
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        yield
+        app.state.is_shutting_down = True
+        app.state.session_store.close()
+        session_factory.kw["bind"].dispose()
+
+    app = FastAPI(
+        title=app_settings.app_name,
+        version=app_settings.app_version,
+        lifespan=lifespan,
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=app_settings.allowed_origins,
@@ -42,10 +56,11 @@ def create_app(app_settings: Settings = settings) -> FastAPI:
         allow_headers=["*"],
     )
     app.middleware("http")(request_logging_middleware)
+    app.middleware("http")(shutdown_guard_middleware)
 
-    session_factory = create_session_factory(app_settings.database_url)
     initialize_database_schema(session_factory.kw["bind"])
     app.state.settings = app_settings
+    app.state.is_shutting_down = False
     app.state.session_factory = session_factory
     app.state.session_store = create_session_store(app_settings.redis_url)
 
@@ -76,6 +91,10 @@ def create_app(app_settings: Settings = settings) -> FastAPI:
         with session_factory() as db_session:
             db_session.execute(text("SELECT 1"))
         return {"status": "ok", "database": "connected"}
+
+    @app.get("/ready")
+    def readiness() -> dict[str, str]:
+        return {"status": "ready"}
 
     return app
 

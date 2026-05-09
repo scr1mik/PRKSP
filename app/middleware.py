@@ -3,8 +3,21 @@ import uuid
 from collections.abc import Awaitable, Callable
 
 from fastapi import Request, Response
+from fastapi.responses import JSONResponse
 
 from app.core.logging import get_logger, request_id_context
+
+
+async def shutdown_guard_middleware(
+    request: Request,
+    call_next: Callable[[Request], Awaitable[Response]],
+) -> Response:
+    if getattr(request.app.state, "is_shutting_down", False):
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Service is shutting down"},
+        )
+    return await call_next(request)
 
 
 async def request_logging_middleware(

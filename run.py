@@ -10,6 +10,7 @@ def main() -> None:
         reload=settings.debug,
         access_log=False,
         log_config=None,
+        timeout_graceful_shutdown=settings.shutdown_timeout_seconds,
     )
 
 

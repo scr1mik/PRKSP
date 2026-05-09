@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     session_ttl_seconds: int = 86400
     image_tag: str = "local"
     release_id: str = "local-dev"
+    shutdown_timeout_seconds: int = 10
     allowed_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
 
     model_config = SettingsConfigDict(
