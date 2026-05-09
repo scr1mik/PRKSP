@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
 
-import { createEvent, deleteEvent, fetchEvents, updateEvent } from "./api";
+import {
+  createEvent,
+  deleteEvent,
+  fetchCurrentUser,
+  fetchEvents,
+  fetchRelease,
+  loginUser,
+  logoutUser,
+  registerUser,
+  updateEvent,
+} from "./api";
 import "./styles.css";
 
 const emptyForm = {
@@ -10,14 +20,26 @@ const emptyForm = {
   category: "",
 };
 
+const emptyAuthForm = {
+  email: "",
+  password: "",
+  full_name: "",
+};
+
 function App() {
   const [events, setEvents] = useState([]);
   const [form, setForm] = useState(emptyForm);
+  const [authForm, setAuthForm] = useState(emptyAuthForm);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [release, setRelease] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [statusMessage, setStatusMessage] = useState("Загрузка событий...");
+  const [authMessage, setAuthMessage] = useState("Войдите или создайте пользователя");
 
   useEffect(() => {
     loadEvents();
+    loadCurrentUser();
+    loadRelease();
   }, []);
 
   async function loadEvents() {
@@ -31,12 +53,78 @@ function App() {
     }
   }
 
+  async function loadCurrentUser() {
+    try {
+      const user = await fetchCurrentUser();
+      setCurrentUser(user);
+      setAuthMessage(`Активная сессия: ${user.email}`);
+    } catch {
+      setCurrentUser(null);
+    }
+  }
+
+  async function loadRelease() {
+    try {
+      setRelease(await fetchRelease());
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   function handleChange(event) {
     const { name, value } = event.target;
     setForm((current) => ({
       ...current,
       [name]: name === "year" ? Number(value) : value,
     }));
+  }
+
+  function handleAuthChange(event) {
+    const { name, value } = event.target;
+    setAuthForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
+  }
+
+  async function handleRegister(event) {
+    event.preventDefault();
+
+    try {
+      await registerUser(authForm);
+      setAuthMessage("Пользователь создан, теперь можно войти");
+    } catch (error) {
+      console.error(error);
+      setAuthMessage("Не удалось зарегистрировать пользователя");
+    }
+  }
+
+  async function handleLogin(event) {
+    event.preventDefault();
+
+    try {
+      const user = await loginUser({
+        email: authForm.email,
+        password: authForm.password,
+      });
+      setCurrentUser(user);
+      setAuthForm(emptyAuthForm);
+      setAuthMessage(`Активная сессия: ${user.email}`);
+    } catch (error) {
+      console.error(error);
+      setAuthMessage("Не удалось войти");
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await logoutUser();
+      setCurrentUser(null);
+      setAuthMessage("Сессия завершена");
+    } catch (error) {
+      console.error(error);
+      setAuthMessage("Не удалось завершить сессию");
+    }
   }
 
   async function handleSubmit(event) {
@@ -96,6 +184,59 @@ function App() {
             Каталог гипотетических событий будущего: от новой пандемии до вторжения
             инопланетян.
           </p>
+          {release && (
+            <p className="release">
+              {release.environment} · {release.image_tag} · {release.release_id}
+            </p>
+          )}
+        </section>
+
+        <section className="panel">
+          <div className="panel-header">
+            <h2>Пользовательская сессия</h2>
+            <span>{authMessage}</span>
+          </div>
+
+          {currentUser ? (
+            <div className="session-box">
+              <strong>{currentUser.full_name}</strong>
+              <span>{currentUser.email}</span>
+              <button type="button" className="secondary" onClick={handleLogout}>
+                Выйти
+              </button>
+            </div>
+          ) : (
+            <form className="event-form" onSubmit={handleLogin}>
+              <input
+                name="email"
+                type="email"
+                placeholder="Email"
+                value={authForm.email}
+                onChange={handleAuthChange}
+                required
+              />
+              <input
+                name="password"
+                type="password"
+                placeholder="Пароль"
+                value={authForm.password}
+                onChange={handleAuthChange}
+                required
+              />
+              <input
+                name="full_name"
+                placeholder="Имя для регистрации"
+                value={authForm.full_name}
+                onChange={handleAuthChange}
+              />
+              <div className="actions">
+                <button type="submit">Войти</button>
+                <button type="button" className="secondary" onClick={handleRegister}>
+                  Зарегистрироваться
+                </button>
+              </div>
+            </form>
+          )}
         </section>
 
         <section className="panel">

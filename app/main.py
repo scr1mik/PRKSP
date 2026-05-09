@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.engine import Engine
 from sqlalchemy import text
 
 from app.api.router import api_router
@@ -11,6 +12,21 @@ from app.core.config import Settings, settings
 from app.db.base import Base
 from app.db.session import create_session_factory
 from app.models.event import Event
+from app.models.user import User
+from app.services.session_store import create_session_store
+
+
+def initialize_database_schema(engine: Engine) -> None:
+    if engine.dialect.name == "postgresql":
+        with engine.begin() as connection:
+            connection.execute(text("SELECT pg_advisory_lock(5005)"))
+            try:
+                Base.metadata.create_all(bind=connection)
+            finally:
+                connection.execute(text("SELECT pg_advisory_unlock(5005)"))
+        return
+
+    Base.metadata.create_all(bind=engine)
 
 
 def create_app(app_settings: Settings = settings) -> FastAPI:
@@ -24,8 +40,10 @@ def create_app(app_settings: Settings = settings) -> FastAPI:
     )
 
     session_factory = create_session_factory(app_settings.database_url)
-    Base.metadata.create_all(bind=session_factory.kw["bind"])
+    initialize_database_schema(session_factory.kw["bind"])
+    app.state.settings = app_settings
     app.state.session_factory = session_factory
+    app.state.session_store = create_session_store(app_settings.redis_url)
 
     app.include_router(api_router, prefix=app_settings.api_prefix)
 

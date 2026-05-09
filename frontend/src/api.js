@@ -1,11 +1,11 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? "/api/events";
+const API_ROOT = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? "/api";
 
 async function request(path = "", options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${API_ROOT}${path}`, {
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     ...options,
   });
 
@@ -21,25 +21,53 @@ async function request(path = "", options = {}) {
 }
 
 export function fetchEvents() {
-  return request("/");
+  return request("/events/");
 }
 
 export function createEvent(payload) {
-  return request("/", {
+  return request("/events/", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
 export function updateEvent(eventId, payload) {
-  return request(`/${eventId}`, {
+  return request(`/events/${eventId}`, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
 }
 
 export function deleteEvent(eventId) {
-  return request(`/${eventId}`, {
+  return request(`/events/${eventId}`, {
     method: "DELETE",
   });
+}
+
+export function registerUser(payload) {
+  return request("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function loginUser(payload) {
+  return request("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function logoutUser() {
+  return request("/auth/logout", {
+    method: "POST",
+  });
+}
+
+export function fetchCurrentUser() {
+  return request("/auth/me");
+}
+
+export function fetchRelease() {
+  return request("/release");
 }

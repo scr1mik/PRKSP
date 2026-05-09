@@ -61,6 +61,16 @@ textarea {
   line-height: 1.6;
 }
 
+.release {
+  display: inline-flex;
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #244c86;
+  font-size: 0.9rem;
+}
+
 .event-form,
 .cards {
   display: grid;
@@ -74,6 +84,17 @@ textarea {
   border-radius: 16px;
   padding: 12px 14px;
   background: #fff;
+}
+
+.session-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.session-box span {
+  color: #5b6472;
 }
 
 .grid {
